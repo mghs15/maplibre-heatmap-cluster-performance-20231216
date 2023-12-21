@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>test</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='./maplibre/maplibre-gl.js'></script>
+<link href='./maplibre/maplibre-gl.css' rel='stylesheet' />
+<style>
+body { margin:0; padding:0; }
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+
+</style>
+</head>
+<body>
+
+<div id='map'></div>
+
+<script>
+
+/**************************************************************************************/
+
+const set = ["cluster", "circle"];
+
+const l = set.length;
+const t = Math.floor(Math.random() * l);
+const n = set[t];
+
+const layers = [];
+
+let style;
+if(n == "cluster"){
+  style = {
+    "version": 8,
+    "name": "test",
+    "sources": {
+      "overlay": {
+        "type": "geojson",
+        "data": "./skhb.geojson",
+        "cluster": true,
+        "clusterMaxZoom": 10,
+        "clusterProperties": {
+          "合計-洪水": ["+", ["to-number",["get", "洪水"]]],
+          "合計-崖崩れ、土石流及び地滑り": ["+", ["to-number",["get", "崖崩れ、土石流及び地滑り"]]],
+          "合計-高潮": ["+", ["to-number",["get", "高潮"]]],
+          "合計-地震": ["+", ["to-number",["get", "地震"]]],
+          "合計-津波": ["+", ["to-number",["get", "津波"]]],
+          "合計-大規模な火事": ["+", ["to-number",["get", "大規模な火事"]]],
+          "合計-内水氾濫": ["+", ["to-number",["get", "内水氾濫"]]],
+          "合計-火山現象": ["+", ["to-number",["get", "火山現象"]]],
+          "合計-指定避難所との重複": ["+", ["to-number",["get", "指定避難所との重複"]]]
+        }
+      }
+    },
+    "layers":[
+      {
+        id: "overlay-circle",
+        type: "circle",
+        source: "overlay",
+        paint: {
+          "circle-color": "rgb(0,0,255)",
+          "circle-radius": 4
+        }
+      }
+    ]
+  }
+}else{
+  style = {
+    "version": 8,
+    "name": "test",
+    "sources": {
+      "overlay": {
+        "type": "geojson",
+        "data": "./skhb.geojson"
+      }
+    },
+    "layers":[
+      {
+        id: "overlay-circle",
+        type: "circle",
+        source: "overlay",
+        paint: {
+          "circle-color": "rgb(0,0,255)",
+          "circle-radius": 4
+        }
+      }
+    ]
+  }
+}
+
+const tm = {
+  start : performance.now()
+};
+
+const map = new maplibregl.Map({
+  container: 'map', // container id
+  hash: true, //add #position on URL
+  style: style, // stylesheet location
+  center: [139.3938, 35.6046], // starting position [lng, lat]
+  zoom: 3, // starting zoom
+  maxZoom: 17.99,
+  localIdeographFontFamily: ['MS Gothic', 'Hiragino Kaku Gothic Pro', 'sans-serif']
+});
+
+map.on('load', () => {
+  tm.load = performance.now() - tm.start; 
+  //console.log(`LayerVSMatch,load,${n},${tm.start},${tm.load},${tm.style_load},${tm.idle}`);
+});
+
+map.on('style.load', () => { 
+  tm.style_load = performance.now() - tm.start; 
+  //console.log(`LayerVSMatch,style.load,${n},${tm.start},${tm.load},${tm.style_load},${tm.idle}`);
+});
+
+map.on('idle', () => { 
+  tm.idle = performance.now() - tm.start;
+  
+  const features = map.queryRenderedFeatures();
+  
+  //testname,event,treatment,start,load,style.load,idle,features_number
+  console.log(`ClusterVsPoint,idle,${n},${tm.start},${tm.load},${tm.style_load},${tm.idle},${features.length}`);
+  
+  //console.log(style);
+  //location.reload();
+});
+
+</script>
+ 
+</body>
+</html>
